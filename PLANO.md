@@ -1,79 +1,52 @@
 # Plano do trabalho: Apache Kafka
 
-Trabalho de comunicação distribuída (tema: Apache Kafka). Vídeo de até 5 min + código em `.zip`.
-Nota: 50% domínio da teoria, 50% aplicação demonstrando as características do protocolo.
-
-## Objetivo pessoal
-Aprender o que um estagiário/júnior realmente precisa saber de Kafka num cenário realista
-(stack de referência: Java + Spring Boot).
+Trabalho de comunicação distribuída sobre Apache Kafka, com vídeo de até 5 min.
+Avaliação: 50% domínio da teoria, 50% aplicação demonstrando as características do protocolo.
 
 ## Cenário
-Eventos de pagamento. A conta é a chave da mensagem.
+Eventos de pagamento, com a conta como chave da mensagem.
 - Tópico `pagamentos` com 3 partições.
 - Producer em Python.
-- Consumers em grupos diferentes (`antifraude`, `notificacao`); consumer Java/Spring Boot como bônus.
+- Consumers em Python e em Java (Spring Boot), em grupos diferentes, lendo o mesmo tópico.
 
-## O que um júnior precisa saber
-
-### Essencial
-1. Tópico, partição, offset: ler uma mensagem não a apaga.
-2. Chave e ordem: mesma chave vai para a mesma partição; a ordem só vale dentro da partição.
-3. Consumer group: cada partição é lida por um consumer do grupo; mais consumers que partições = ociosos.
-4. Commit de offset e entrega: at-least-once se o consumer cai antes do commit.
-5. Idempotência no consumer: a mensagem pode chegar duas vezes (crítico em pagamentos).
-6. Lag do consumer: primeira métrica olhada quando "está atrasado".
-
-### Cenário real
-7. Mensagem que falha: retry e Dead Letter Topic (DLT).
-8. Serialização e contrato: JSON vs Avro, schema evolution.
-9. Rebalanceamento quando um pod sobe ou cai.
-
-### Pode esperar
-Administração de cluster, tuning, Kafka Streams, Connect, exactly-once com transações.
-
-## Pub/sub no Kafka
-Não há modo separado; o consumer group define o comportamento.
-- Grupos diferentes no mesmo tópico: cada grupo recebe tudo (pub/sub).
-- Mesmo grupo: mensagens divididas entre consumers (balanceamento / fila de trabalho).
-
-## Roteiro do vídeo (até 5 min)
-| Tempo | Cena | Conteúdo |
+## Vídeo (5 min, 4 cenas)
+| Tempo | Cena | Mostra |
 |---|---|---|
-| 0:00-0:30 | Intro | Problema, por que Kafka, diagrama |
-| 0:30-1:15 | Partições e chave | Producer; mesma conta sempre na mesma partição; offsets |
-| 1:15-2:00 | Consumer group | Dois consumers dividem partições; rebalanceamento |
-| 2:00-2:45 | Pub/sub | Segundo grupo recebe tudo; replay com `earliest` |
-| 2:45-3:45 | Falhas | Idempotência e mensagem inválida indo para o DLT |
-| 3:45-4:30 | Lag | Consumer parado: lag cresce; volta: zera |
-| 4:30-5:00 | Fechamento | Kafka vs RabbitMQ, quando usar cada um |
+| 0:00-0:30 | Intro | Problema e diagrama do cenário |
+| 0:30-1:45 | Tópico, partição e chave | Partição e offset de cada mensagem; mesma conta na mesma partição |
+| 1:45-3:00 | Consumer group | Dois consumers dividindo as partições; rebalanceamento quando um cai |
+| 3:00-4:15 | Pub/sub, replay e lag | Grupo `antifraude` (Python) e grupo `notificacao` (Spring Boot) recebendo tudo; `earliest`; lag com consumer parado |
+| 4:15-5:00 | Fechamento | Idempotência em demo curta e uma frase comparando com RabbitMQ |
 
-## Teoria (50% da nota)
+## Implementação (em ordem; só avança quando a etapa anterior funciona)
+1. **Básico:** broker, tópico, producer e consumer Python rodando.
+2. **Consumer groups e pub/sub:** o mesmo consumer com outros `group.id`.
+3. **Lag:** `kafka-consumer-groups.sh --describe`.
+4. **Consumer Java:** projeto Spring Boot com `spring-kafka` e `@KafkaListener`, em grupo próprio.
+5. **Idempotência:** o consumer guarda os ids já processados e ignora duplicatas, com teste que reenvia a mesma mensagem.
+
+## Conceitos-chave
+- **Tópico, partição, offset:** ler uma mensagem não a apaga.
+- **Chave e ordem:** mesma chave vai para a mesma partição; a ordem só vale dentro da partição.
+- **Consumer group:** cada partição é lida por um consumer do grupo; consumers além do número de partições ficam ociosos.
+- **Pub/sub:** não há modo separado; grupos diferentes no mesmo tópico recebem tudo, o mesmo grupo divide as mensagens.
+- **Interoperabilidade:** producer e consumers em linguagens diferentes, com JSON como contrato.
+- **Commit de offset e entrega:** se o consumer cai antes do commit, a mensagem é reprocessada (at-least-once).
+- **Idempotência:** processar a mesma mensagem duas vezes tem o mesmo efeito que uma (crítico em pagamentos).
+- **Lag:** diferença entre a última mensagem produzida e a última lida pelo consumer.
+
+## Teoria
 1. Log distribuído append-only e retenção.
 2. Broker, tópico, partição, offset.
 3. Chave, partição e ordem.
 4. Consumer groups e rebalanceamento.
 5. Replicação, líder e ISR (conceito).
 6. Semânticas de entrega: at-most-once, at-least-once, exactly-once.
-7. Kafka vs RabbitMQ (log vs fila) e vs REST/RPC (acoplamento temporal).
+7. Kafka vs RabbitMQ: log vs fila.
 
-## Etapas
-1. Estudar a teoria.
-2. Revisar o código existente.
-3. Implementar o cenário (idempotência, DLT, lag; consumer Spring Boot opcional).
-4. Testar o roteiro completo sem gravar.
-5. Gravar o vídeo (narração própria).
-6. Gerar o `.zip` com código e README.
-
-## Entregáveis
-- Vídeo separado, sem compactar, até 5 min.
-- `.zip` com o código e README.
-- Upload dos arquivos no Classroom (sem links).
+## Fora do escopo
+Dead Letter Topic, administração de cluster, tuning, Kafka Streams, Kafka Connect, exactly-once com transações.
 
 ## Estado atual
-Existe apenas a base: `docker-compose.yml` (broker KRaft), `producer.py`, `consumer.py`
-(commit manual) e versões Node.js (`producer.js`, `consumer.js`) que provavelmente saem.
-Nada foi testado ainda.
-
-## Decisões em aberto
-- Individual ou dupla?
-- Incluir o consumer Spring Boot (depende de Maven/Gradle disponível)?
+Base pronta, ainda sem testes: `docker-compose.yml` (broker KRaft), `producer.py` e `consumer.py` (commit manual).
+Pendente: verificar Maven/Gradle e compatibilidade do Java 25 com Spring Boot antes de criar o consumer Java.
