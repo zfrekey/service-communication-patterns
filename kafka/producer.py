@@ -1,19 +1,48 @@
-"""Producer Python: envia pagamentos ao topico. A CHAVE (conta) define a particao,
-entao eventos da mesma conta mantem ordem."""
-import json, sys, time
+"""Serviço A: publica pagamentos no tópico `pagamentos`.
+
+A chave da mensagem é o tipo do pagamento. Mesma chave -> mesma partição,
+então os pagamentos de um mesmo tipo mantêm a ordem entre si.
+
+Uso: python producer.py [--quantidade 12] [--intervalo 0.5] [--inicio 1]
+"""
+import argparse
+import json
+import random
+import time
+
 from confluent_kafka import Producer
 
-TOPIC = "pagamentos"
-N = int(sys.argv[1]) if len(sys.argv) > 1 else 12
-p = Producer({"bootstrap.servers": "localhost:9092", "acks": "all"})
+TOPICO = "pagamentos"
+TIPOS = ["pix", "cartao", "boleto"]
 
-def ok(err, msg):
-    print(f"[producer] {'ERRO '+str(err) if err else 'ack'} chave={msg.key().decode()} "
-          f"particao={msg.partition()} offset={msg.offset()}")
 
-for i in range(N):
-    conta = f"conta-{i % 4}"
-    evento = {"id": i, "conta": conta, "valor": round(10 + i * 7.5, 2), "origem": "python"}
-    p.produce(TOPIC, key=conta, value=json.dumps(evento), callback=ok)
-    p.poll(0); time.sleep(0.2)
-p.flush()
+def entregue(err, msg):
+    if err:
+        print(f"[A] ERRO ao enviar: {err}", flush=True)
+        return
+    p = json.loads(msg.value())
+    print(f"[A] pagamento {p['id']:>3} ({p['tipo']:<6}) -> partição {msg.partition()}  offset {msg.offset()}",
+          flush=True)
+
+
+def main():
+    parser = argparse.ArgumentParser(description="Serviço A: producer Kafka")
+    parser.add_argument("--quantidade", type=int, default=12)
+    parser.add_argument("--intervalo", type=float, default=0.5, help="segundos entre envios")
+    parser.add_argument("--inicio", type=int, default=1, help="id do primeiro pagamento")
+    args = parser.parse_args()
+
+    # acks=all: o broker só confirma depois que todas as réplicas em sincronia (ISR) gravaram.
+    producer = Producer({"bootstrap.servers": "localhost:9092", "acks": "all"})
+
+    for i in range(args.inicio, args.inicio + args.quantidade):
+        pagamento = {"id": i, "valor": round(random.uniform(10, 500), 2), "tipo": TIPOS[i % len(TIPOS)]}
+        producer.produce(TOPICO, key=pagamento["tipo"], value=json.dumps(pagamento), callback=entregue)
+        producer.poll(0)
+        time.sleep(args.intervalo)
+
+    producer.flush()
+
+
+if __name__ == "__main__":
+    main()
