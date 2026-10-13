@@ -1,52 +1,60 @@
-# Plano do trabalho: Apache Kafka
+# Estudo de protocolos de comunicação distribuída
 
-Trabalho de comunicação distribuída sobre Apache Kafka, com vídeo de até 5 min.
-Avaliação: 50% domínio da teoria, 50% aplicação demonstrando as características do protocolo.
+Estudo prático de quatro formas de comunicação entre sistemas distribuídos: **REST, gRPC, RabbitMQ e Apache Kafka**.
+Cada protocolo tem sua pasta, com código executável e um documento detalhado:
+- [REST.md](REST.md)
+- [GRPC.md](GRPC.md)
+- [RABBITMQ.md](RABBITMQ.md)
+- [KAFKA.md](KAFKA.md)
 
-## Cenário
-Eventos de pagamento, com a conta como chave da mensagem.
-- Tópico `pagamentos` com 3 partições.
-- Producer em Python.
-- Consumers em Python e em Java (Spring Boot), em grupos diferentes, lendo o mesmo tópico.
+## Objetivo
+Para cada protocolo, entender e demonstrar na prática:
+- **Como funciona:** modelo de comunicação, conceitos centrais e garantias.
+- **Vantagens:** distribuição, desacoplamento, desempenho, conforme o caso.
+- **Interoperabilidade:** pelo menos duas linguagens se comunicando. Python é a base em todos. A segunda linguagem é Node no RabbitMQ e no Kafka; no REST e no gRPC ela é escolhida na hora da implementação (opções em cada plano).
+- **Paradigma de comunicação:** síncrono x assíncrono, request/response x streaming x pub/sub.
 
-## Vídeo (5 min, 4 cenas)
-| Tempo | Cena | Mostra |
-|---|---|---|
-| 0:00-0:30 | Intro | Problema e diagrama do cenário |
-| 0:30-1:45 | Tópico, partição e chave | Partição e offset de cada mensagem; mesma conta na mesma partição |
-| 1:45-3:00 | Consumer group | Dois consumers dividindo as partições; rebalanceamento quando um cai |
-| 3:00-4:15 | Pub/sub, replay e lag | Grupo `antifraude` (Python) e grupo `notificacao` (Spring Boot) recebendo tudo; `earliest`; lag com consumer parado |
-| 4:15-5:00 | Fechamento | Idempotência em demo curta e uma frase comparando com RabbitMQ |
+Cada estudo termina com uma demonstração gravada (máximo de 5 min) mostrando o sistema executando e a comunicação ocorrendo:
+- **RabbitMQ e Kafka:** usam os 5 min completos, porque têm mais características para mostrar.
+- **REST e gRPC:** em torno de 4 min, completos em conteúdo, sem enchimento para chegar a 5.
 
-## Implementação (em ordem; só avança quando a etapa anterior funciona)
-1. **Básico:** broker, tópico, producer e consumer Python rodando.
-2. **Consumer groups e pub/sub:** o mesmo consumer com outros `group.id`.
-3. **Lag:** `kafka-consumer-groups.sh --describe`.
-4. **Consumer Java:** projeto Spring Boot com `spring-kafka` e `@KafkaListener`, em grupo próprio.
-5. **Idempotência:** o consumer guarda os ids já processados e ignora duplicatas, com teste que reenvia a mesma mensagem.
+## Cenário comum
+O mesmo contexto em todos os protocolos, propositalmente simples:
+- **Serviço A** envia pagamentos.
+- **Serviços B, C, ...** recebem e processam (só imprimem o que chegou e quem processou).
 
-## Conceitos-chave
-- **Tópico, partição, offset:** ler uma mensagem não a apaga.
-- **Chave e ordem:** mesma chave vai para a mesma partição; a ordem só vale dentro da partição.
-- **Consumer group:** cada partição é lida por um consumer do grupo; consumers além do número de partições ficam ociosos.
-- **Pub/sub:** não há modo separado; grupos diferentes no mesmo tópico recebem tudo, o mesmo grupo divide as mensagens.
-- **Interoperabilidade:** producer e consumers em linguagens diferentes, com JSON como contrato.
-- **Commit de offset e entrega:** se o consumer cai antes do commit, a mensagem é reprocessada (at-least-once).
-- **Idempotência:** processar a mesma mensagem duas vezes tem o mesmo efeito que uma (crítico em pagamentos).
-- **Lag:** diferença entre a última mensagem produzida e a última lida pelo consumer.
+Mensagem padrão, em JSON (ou o equivalente em Protobuf no gRPC):
+```json
+{ "id": 1, "valor": 100.0, "tipo": "pix" }
+```
+`tipo` pode ser `pix`, `cartao` ou `boleto`; serve para roteamento e filtros quando necessário.
 
-## Teoria
-1. Log distribuído append-only e retenção.
-2. Broker, tópico, partição, offset.
-3. Chave, partição e ordem.
-4. Consumer groups e rebalanceamento.
-5. Replicação, líder e ISR (conceito).
-6. Semânticas de entrega: at-most-once, at-least-once, exactly-once.
-7. Kafka vs RabbitMQ: log vs fila.
+## Comparação dos paradigmas
+| Protocolo | Paradigma | Acoplamento | Formato | Transporte |
+|---|---|---|---|---|
+| REST | Síncrono, request/response | A espera B responder | JSON | HTTP |
+| gRPC | Síncrono + streaming (4 tipos) | Contrato forte (`.proto`) | Protobuf (binário) | HTTP/2 |
+| RabbitMQ | Assíncrono, filas, roteamento no broker | A e B desacoplados pelo broker | JSON | AMQP |
+| Kafka | Assíncrono, log distribuído, pub/sub | Desacoplado, com replay | JSON | Protocolo próprio sobre TCP |
 
-## Fora do escopo
-Dead Letter Topic, administração de cluster, tuning, Kafka Streams, Kafka Connect, exactly-once com transações.
+## Estrutura
+```
+rest/
+grpc/
+rabbitmq/
+kafka/
+```
+Cada pasta é autocontida: `README` com como rodar, `docker-compose.yml` quando houver broker, e código nas duas linguagens.
+Por enquanto só existe `kafka/`; as outras pastas ainda não foram criadas.
 
-## Estado atual
-Base pronta, ainda sem testes: `docker-compose.yml` (broker KRaft), `producer.py` e `consumer.py` (commit manual).
-Pendente: verificar Maven/Gradle e compatibilidade do Java 25 com Spring Boot antes de criar o consumer Java.
+## Ordem de estudo
+1. **Kafka:** já tem base.
+2. **RabbitMQ:** contraste direto com Kafka (fila x log).
+3. **REST:** comunicação síncrona mais simples.
+4. **gRPC:** contrato forte e streaming.
+
+## Progresso
+- [ ] Kafka
+- [ ] RabbitMQ
+- [ ] REST
+- [ ] gRPC
