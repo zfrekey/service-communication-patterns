@@ -228,4 +228,5 @@ Comandos de cada demo na ordem do roteiro do vídeo, com a saída esperada.
 - **guest/guest** só funciona a partir de localhost (padrão do RabbitMQ). Aqui não é problema.
 
 ## Estado
-Plano pronto; código não iniciado.
+Implementado em [rabbitmq/](rabbitmq/README.md). Todos os critérios de pronto foram verificados (RabbitMQ 4, pika 1.3, amqplib 0.10).
+- Interoperabilidade: a alternância Python/Node exige `--intervalo` no producer. Sem ele, com `prefetch 1`, quem der o ack primeiro leva a próxima mensagem.

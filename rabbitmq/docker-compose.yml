@@ -1,0 +1,11 @@
+services:
+  rabbitmq:
+    image: rabbitmq:4-management
+    container_name: rabbitmq
+    # O nome do nó (rabbit@rabbit) depende do hostname; sem fixar, o restart "esquece" as filas.
+    hostname: rabbit
+    ports: ["5672:5672", "15672:15672"]
+    volumes: [rabbitmq-dados:/var/lib/rabbitmq]
+
+volumes:
+  rabbitmq-dados:
