@@ -41,15 +41,41 @@ message Resumo    { int32 quantidade = 1; double total = 2; }
 ## Roteiro do vídeo (duração alvo: ~4 a 4:30 min; não precisa preencher os 5)
 | Tempo | Cena | Mostra | Fala |
 |---|---|---|---|
-| 0:00-0:40 | Intro | Diagrama A → stub → HTTP/2 → stub → B | RPC: chamar uma função remota como se fosse local; stubs e marshalling; a rede introduz falhas parciais |
-| 0:40-1:20 | Contrato | O `.proto` e a geração de código em Python e na segunda linguagem | Contrato forte (IDL) x contrato informal do REST; Protobuf binário; campos numerados e evolução compatível |
+| 0:00-0:40 | Intro | Diagrama A → stub → HTTP/2 → stub → B | Definição de Birrell e Nelson; transparência pelos stubs; a rede introduz falhas parciais |
+| 0:40-1:20 | Contrato | O `.proto` e a geração de código em Python e na segunda linguagem | IDL compilada gerando stubs em várias linguagens; contrato forte x contrato informal do REST; Protobuf binário; campos numerados e evolução compatível |
 | 1:20-1:40 | Unary | A chama `Pagar` e recebe o recibo | Request/response clássico |
 | 1:40-2:05 | Server streaming | `ListarPagamentos` chegando item a item | B envia vários, A consome conforme chegam |
 | 2:05-2:30 | Client streaming | A envia 5 pagamentos; B responde só no final | Útil para upload e lotes |
 | 2:30-3:00 | Bidirecional | Envios e recibos intercalados | Dois fluxos independentes sobre o mesmo stream HTTP/2 |
 | 3:00-3:25 | Interoperabilidade | Cliente na segunda linguagem chamando B em Python | O `.proto` é o único acordo entre as linguagens |
 | 3:25-4:00 | Robustez | Deadline estourando, `INVALID_ARGUMENT`, `UNAUTHENTICATED` sem token | Deadlines, status codes e metadata padronizados |
-| 4:00-4:30 | Fechamento | Comparação curta com REST | Vantagens (HTTP/2, binário, tipagem, streaming) e limites (navegador precisa de gRPC-Web, payload não é legível, acoplamento temporal) |
+| 4:00-4:30 | Fechamento | Comparação curta com REST | "Novos frameworks de RPC (e.g. gRPC) disputam espaço com REST."; vantagens (HTTP/2, binário, tipagem, streaming) e limites (navegador precisa de gRPC-Web, payload não é legível, acoplamento temporal) |
+
+## Material da aula 6 (citar no vídeo)
+Trechos da aula `Aula06-sd-comunicacao.pdf`, **exatamente como o professor escreveu**. A coluna "Cena" diz onde cada um entra no roteiro. O gRPC é a parte da aula sobre RPC aplicada; a aula o cita pelo nome.
+
+| Cena | Como está na aula |
+|---|---|
+| Intro | "Permite a processos chamar procedimentos localizados em outras máquinas" — (Birrell and Nelson - 1984) |
+| Intro | "Surge da necessidade de obter transparência de acesso em sistemas distribuídos, o que não ocorre com o uso dos procedimentos send e receive." |
+| Intro | "Nenhum aspecto da troca de mensagens é visível para o programador!" |
+| Intro | "A Transparência é alcançada com o uso de stubs" |
+| Intro | Stub do cliente: "Responsável por empacotar os parâmetros em uma mensagem e enviá-la para a máquina do servidor". Stub do servidor: "Responsável por desempacotar os parâmetros"; "Chama o procedimento do servidor e retorna a resposta para máquina do cliente" |
+| Intro | "O stub do cliente efetua o send e o receive, bloqueando a si mesmo até que a resposta volte" |
+| Contrato | "É necessário definir o formato da mensagem, de modo que o chamador e o chamado sigam as mesmas etapas"; "Ambos necessitam concordar com as definições de tipo" |
+| Contrato | "Para simplificar, interfaces costumam ser especificadas por uma IDL – Interface Definition Language" |
+| Contrato | "Uma interface definida por IDL é compilada para gerar um stub de cliente e um stub de servidor" |
+| Contrato / Interoperabilidade | "Suporta geração de stubs para diversas linguagens"; "Cliente e servidor podem ser implementados em linguagens diferentes" |
+| Contrato | "Passar parâmetros e resultados pode ser complicado quando se trata de máquinas diferentes (big endian, little endian, arquiteturas 32/64 bits, etc.)" → o Protobuf resolve isso com tipos e codificação fixos |
+| Unary | RPC Síncrona: "Bloqueia o cliente até o servidor terminar de processar a requisição do cliente e retornar uma resposta" |
+| Unary | Etapas do RPC: "1. Procedimento de cliente chama o stub de cliente do modo normal" ... "10. O stub desempacota o resultado e retorna ao cliente" (mostrar as 10 etapas no diagrama da intro ou do unary) |
+| Bidirecional / Fechamento | RPC Assíncrona: "Não bloqueia o cliente enquanto o servidor processa a requisição do cliente"; "Ao receber resposta, cliente executa rotina de callback (pós-processamento)" |
+| Robustez | "Qualquer uma das duas máquinas pode falhar e cada uma das possíveis falhas causa problemas diferentes" → deadlines e status codes |
+| Fechamento | "Ainda assim, RPC é uma técnica de ampla utilização em SD"; "Em aplicações Web, RPC perdeu espaço para comunicação REST."; "Novos frameworks de RPC (e.g. gRPC) disputam espaço com REST." |
+
+**Classificação nos eixos da aula**: transiente e síncrona no unary, confiável no transporte; o streaming é o caso de comunicação em **fluxo** ("São enviadas várias mensagens"; "As mensagens estão relacionadas uma com as outras pela ordem ou pela relação temporal").
+
+**Além do material** (o que o vídeo acrescenta): Protocol Buffers e numeração de campos, HTTP/2 e os 4 tipos de RPC (unary e 3 de streaming), deadlines, status codes do gRPC, metadata/autenticação, server reflection.
 
 ## Conceitos-chave
 - **RPC e transparência:** o stub esconde rede, serialização e transporte.

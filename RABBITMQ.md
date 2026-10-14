@@ -36,7 +36,7 @@ Estudo do RabbitMQ como middleware de mensagens: roteamento, balanceamento, pers
 ## Roteiro do vídeo (duração alvo: 5 min completos)
 | Tempo | Cena | Mostra | Fala |
 |---|---|---|---|
-| 0:00-0:35 | Intro | Diagrama A → exchange → binding → fila → B/C/D; painel em :15672 | Middleware de mensagens, comunicação assíncrona, A não conhece B; AMQP: conexão, canal, exchange, fila |
+| 0:00-0:35 | Intro | Diagrama A → exchange → binding → fila → B/C/D; painel em :15672 | MOM: "comunicação assíncrona persistente", A não conhece B; AMQP: conexão, canal, exchange, fila; "Uma exchange nunca armazena mensagens" |
 | 0:35-1:00 | Direct | A publica `pix` e `cartao`; B e C recebem só a sua | Roteamento por chave exata |
 | 1:00-1:20 | Fanout | Uma publicação, B, C e D recebem | Broadcast; a chave é ignorada |
 | 1:20-1:50 | Topic | Tabela de quem recebeu cada chave | Curingas `*` (uma palavra) e `#` (zero ou mais) |
@@ -48,6 +48,35 @@ Estudo do RabbitMQ como middleware de mensagens: roteamento, balanceamento, pers
 | 4:30-5:00 | Interoperabilidade e fechamento | Consumer Node/Java na mesma fila | Vantagens do RabbitMQ; uma frase sobre Kafka: fila entrega e apaga, log retém |
 
 Se faltar tempo, a default exchange vira uma frase e o fair dispatch fica de fora.
+
+## Material da aula 6 (citar no vídeo)
+Trechos da aula `Aula06-sd-comunicacao.pdf`, **exatamente como o professor escreveu**. A coluna "Cena" diz onde cada um entra no roteiro. O RabbitMQ fecha a parte da aula sobre MOM e AMQP; a aula o cita pelo nome.
+
+| Cena | Como está na aula |
+|---|---|
+| Intro | MOM: "Também conhecido como sistema de enfileiramento de mensagens"; "Proporciona comunicação assíncrona persistente" |
+| Intro | "Oferecem capacidade de armazenamento de médio prazo para mensagens, sem exigir que o remetente ou receptor estejam ativos durante a transmissão da mensagem" |
+| Intro | "Não há garantias de QUANDO ou SE a mensagem será lida pelo receptor"; "Comunicação fracamente acoplada em relação ao tempo"; "Receptor não precisa estar em execução quando uma mensagem for enviada para sua fila" |
+| Intro | "Tão logo uma mensagem tenha sido depositada em uma fila, ali permanecerá até ser removida, independentemente de seu remetente ou receptor estar em execução" |
+| Intro | Message broker: "atua como intermediário entre os produtores e consumidores de mensagens"; "Gerencia o roteamento, armazenamento temporário e entrega de mensagens" |
+| Intro | "Em 2006, um grupo de trabalho foi formado para alterar essa situação, o que resultou na especificação do Protocolo Avançado de Fila de Mensagens, ou simplesmente AMQP." (motivação: "As soluções de fila de mensagens são, em grande parte, soluções proprietárias.") |
+| Intro | "O AMQP permite que um aplicativo estabeleça uma conexão com um gerenciador de filas; uma conexão é um contêiner para vários canais unidirecionais."; "O AMQP pressupõe que o TCP seja utilizado para estabelecer conexões." |
+| Intro | "O servidor RabbitMQ é uma das implementações mais populares do AMQP."; "Baseado na versão 0.9 do AMQP, mas oferece suporte total à versão 1.0." |
+| Intro / Default | "Em vez de manipular diretamente filas, os produtores entram em contato com uma exchange, que, por sua vez, coloca mensagens em uma ou várias filas." |
+| Intro | "Uma exchange nunca armazena mensagens; ela apenas garante que uma mensagem seja colocada em uma fila apropriada." |
+| Fanout | Fanout Exchange (Troca de Emissão): "Roteia mensagens para todas as filas vinculadas a ela."; "Ignora completamente a chave de roteamento na mensagem." |
+| Direct | Direct Exchange (Troca Direta): "Roteia mensagens para filas com base em uma chave de roteamento."; "A chave de roteamento deve corresponder exatamente à chave especificada na mensagem."; "Se várias filas se associarem à mesma chave, funciona como fanout." → é o caso de B e D ligados a `pix` |
+| Topic | Topic Exchange (Troca de Tópico): "Roteia mensagens para filas com base em padrões de chave de roteamento."; "As filas são vinculadas à troca com uma chave de roteamento que inclui padrões (*, #, ...)." |
+| Persistente x transiente | "Um aspecto importante do AMQP é o suporte para mensagens persistentes."; "Uma mensagem pode ser marcada como durável, indicando que a fonte espera que qualquer nó intermediário, como uma fila, seja capaz de se recuperar em caso de falha." |
+| Persistente x transiente | Persistente: "Uma mensagem é armazenada pelo middleware de comunicação durante o tempo que for necessário para entregá-la ao receptor". Transiente: "Caso o middleware não possa entregar a mensagem, ela será descartada" |
+| Com e sem confirmação | "O receptor pode indicar ao remetente se sua mensagem foi aceita (significando que foi processada com sucesso) ou rejeitada." |
+| Com e sem confirmação | Passos da transferência: a mensagem fica "em um estado não resolvido" até o receptor informar que concluiu; "como o aplicativo receptor pode indicar à camada de comunicação subjacente do AMQP que concluiu o processamento de uma mensagem, o AMQP possibilita uma confiabilidade real na comunicação de ponta a ponta." |
+| Prioridade / Balanceamento | "O controle de fluxo é estabelecido por meio de créditos: um receptor pode informar ao remetente quantas mensagens ele tem permissão para enviar." → é a ideia do `prefetch_count` |
+| Balanceamento | Interface básica do MOM: "get: bloqueie até que a fila especificada esteja não vazia e retire a primeira mensagem"; "poll: verifique uma fila especificada em busca de mensagens e retire a primeira, se houver. Nunca bloqueie."; "notify: instale um manipulador (callback) a ser chamado quando uma mensagem for colocada em uma fila específica." → `basic_get` é o poll; `basic_consume` com callback é o notify |
+
+**Classificação nos eixos da aula**: assíncrona; persistente ou transiente conforme a fila e a mensagem (as duas demos mostram os dois lados); confiável com ack e publisher confirms, não-confiável com `auto_ack`; discreta.
+
+**Além do material** (o que o vídeo acrescenta): headers exchange e default exchange (a aula só traz fanout, direct e topic), round-robin e round-robin ponderado, `auto_ack` x ack manual com reentrega, publisher confirms, prioridade com `x-max-priority`, prefetch/fair dispatch, cuidados de durabilidade no RabbitMQ 4.
 
 ## Conceitos-chave
 - **Exchange, binding, fila:** o producer não publica direto na fila; o broker roteia.

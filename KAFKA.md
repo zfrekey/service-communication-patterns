@@ -24,12 +24,32 @@ Estudo do Kafka como log distribuído de eventos e da sua diferença em relaçã
 ## Roteiro do vídeo (duração alvo: 5 min completos)
 | Tempo | Cena | Mostra | Fala |
 |---|---|---|---|
-| 0:00-0:35 | Intro | Diagrama A → tópico (3 partições) → grupos B e C; broker KRaft subindo | Kafka é um log distribuído append-only; broker, tópico, retenção |
+| 0:00-0:35 | Intro | Diagrama A → tópico (3 partições) → grupos B e C; broker KRaft subindo | Encaixe na aula: MOM, "comunicação assíncrona persistente"; Kafka é um log distribuído append-only; broker, tópico, retenção |
 | 0:35-1:30 | Partição, chave e offset | A loga partição/offset; vários `pix` na mesma partição, em ordem | Chave → hash → partição; ordem só dentro da partição; offset é a posição no log |
 | 1:30-2:25 | Consumer group | Duas instâncias de B dividindo partições; derrubar uma e ver o rebalanceamento; 4ª instância ociosa | Paralelismo limitado ao número de partições; rebalanceamento automático |
 | 2:25-3:10 | Pub/sub e replay | `grupo-b` e `grupo-c` (outra linguagem) recebendo tudo; novo grupo com `earliest` lendo o histórico | Não há modo pub/sub separado: grupos diferentes recebem tudo; ler não apaga; JSON como contrato entre linguagens |
 | 3:10-3:55 | Lag e commit | B parado, `LAG` subindo e zerando quando volta; B cai antes do commit e reprocessa | Commit de offset; at-least-once; replicação, líder e ISR como conceito |
 | 3:55-5:00 | Kafka x RabbitMQ | Tabela abaixo na tela | Log x fila, retenção x remoção, replay, quem controla a leitura, roteamento, prioridade, quando usar cada um |
+
+## Material da aula 6 (citar no vídeo)
+O Kafka **não aparece pelo nome** nos slides `Aula06-sd-comunicacao.pdf`. Ele entra pelos conceitos de comunicação persistente assíncrona, MOM e publica/subscreve, que devem ser citados **exatamente como o professor escreveu**. A coluna "Cena" diz onde cada um entra no roteiro.
+
+| Cena | Como está na aula |
+|---|---|
+| Intro | Comunicação Persistente: "Uma mensagem é armazenada pelo middleware de comunicação durante o tempo que for necessário para entregá-la ao receptor"; "A aplicação receptora não precisa estar em execução no momento da apresentação da mensagem" → no Kafka a mensagem fica até **depois** da entrega (retenção) |
+| Intro | Comunicação Assíncrona: "Remetente continua sua execução imediatamente após ter apresentado sua mensagem para transmissão" |
+| Intro | MOM: "Proporciona comunicação assíncrona persistente"; "Oferecem capacidade de armazenamento de médio prazo para mensagens, sem exigir que o remetente ou receptor estejam ativos durante a transmissão da mensagem" |
+| Intro | Message broker: "atua como intermediário entre os produtores e consumidores de mensagens" |
+| Lag e commit | "Não há garantias de QUANDO ou SE a mensagem será lida pelo receptor"; "Comportamento determinado pelo destinatário."; "Comunicação fracamente acoplada em relação ao tempo" → no Kafka quem decide quando ler é o consumer (offset); o lag mede isso |
+| Lag e commit | "Tão logo uma mensagem tenha sido depositada em uma fila, ali permanecerá até ser removida, independentemente de seu remetente ou receptor estar em execução" → contraste: no Kafka ler não remove; só a retenção remove |
+| Pub/sub e replay | ZeroMQ publica/subscreve: "Os clientes se inscrevem em mensagens específicas e apenas as mensagens às quais o cliente se inscreveu serão transmitidas."; "Se um servidor estiver publicando mensagens para as quais ninguém se inscreveu, essas mensagens serão perdidas." → contraste: no Kafka um grupo novo lê o histórico (replay), nada se perde por falta de inscrito |
+| Consumer group | ZeroMQ pipeline: "Um socket Push distribuirá as mensagens enviadas para seus clientes Pull de forma equilibrada (round-robin)." → comparar com a divisão de partições dentro de um consumer group |
+| Partição, chave e offset | Fluxo: "As mensagens estão relacionadas uma com as outras pela ordem ou pela relação temporal" → a partição é um fluxo ordenado |
+| Kafka x RabbitMQ | "O servidor RabbitMQ é uma das implementações mais populares do AMQP."; "Uma exchange nunca armazena mensagens; ela apenas garante que uma mensagem seja colocada em uma fila apropriada." → no Kafka não há exchange: o producer escreve direto no tópico e a chave decide a partição |
+
+**Classificação nos eixos da aula**: persistente (o log fica em disco, mesmo depois da leitura), assíncrona, confiável com commit de offset e replicação, discreta por mensagem com cada partição formando um fluxo ordenado.
+
+**Além do material** (quase todo o vídeo): log distribuído append-only, retenção, partições e chave, offset, consumer groups e rebalanceamento, replay, lag, commit manual e at-least-once, replicação/líder/ISR, KRaft.
 
 ## Implementação (em ordem; só avança quando a etapa anterior funciona)
 1. **Básico:** broker, tópico, A e B rodando.

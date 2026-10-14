@@ -37,6 +37,40 @@ Mensagem padrão, em JSON (ou o equivalente em Protobuf no gRPC):
 | RabbitMQ | Assíncrono, filas, roteamento no broker | A e B desacoplados pelo broker | JSON | AMQP |
 | Kafka | Assíncrono, log distribuído, pub/sub | Desacoplado, com replay | JSON | Protocolo próprio sobre TCP |
 
+## Material da aula 6 (Comunicação): base comum dos vídeos
+Fonte: slides `Aula06-sd-comunicacao.pdf` (bibliografia do professor: Tanenbaum, *Sistemas Distribuídos: Princípios e Paradigmas*, cap. 4). Os trechos entre aspas estão **exatamente como o professor escreveu** e devem ser citados assim no vídeo. Cada `.md` de protocolo tem a sua seção "Material da aula 6" com as citações específicas; aqui ficam as que valem para todos.
+
+**Fundamentos:**
+> "A comunicação entre processos está no coração de qualquer SD"
+> "A comunicação em SD é sempre baseada em troca de mensagens"
+> "Desejável obter modelos onde a complexidade da comunicação seja transparente para o desenvolvedor"
+
+**Tipos de comunicação:** todo vídeo classifica o seu protocolo nestes quatro eixos, usando as definições do professor:
+| Eixo | Definição do professor (literal) |
+|---|---|
+| Persistente | "Uma mensagem é armazenada pelo middleware de comunicação durante o tempo que for necessário para entregá-la ao receptor" |
+| Transiente | "Uma mensagem é armazenada pelo middleware de comunicação somente durante o tempo em que a aplicação remetente e a aplicação receptora estiverem executando"; "Caso o middleware não possa entregar a mensagem, ela será descartada" |
+| Síncrona | "Remetente usa chamada bloqueante para envio de mensagem"; "Remetente e receptor deve estar ativos ao mesmo tempo e sincronizados" |
+| Assíncrona | "Remetente continua sua execução imediatamente após ter apresentado sua mensagem para transmissão"; "Oculta latência de comunicação intrínseca de sistemas distribuídos" |
+| Confiável | "Há garantia de entrega da mensagem"; "Dados não chegam corrompidos" |
+| Não-confiável | "Não há garantia de entrega"; "Dados podem chegar corrompidos" |
+| Discreta | "Cada mensagem forma uma unidade de informação completa" |
+| Fluxo | "As mensagens estão relacionadas uma com as outras pela ordem ou pela relação temporal" |
+
+**Classificação dos quatro protocolos nos eixos da aula** (é a nossa leitura, para cada vídeo dizer em uma frase onde o protocolo se encaixa):
+| Protocolo | Persistente x transiente | Síncrona x assíncrona | Confiável x não-confiável | Discreta x fluxo |
+|---|---|---|---|---|
+| REST | Transiente (se B estiver fora, a requisição falha) | Síncrona (request/response bloqueante) | Confiável no transporte (TCP); retry exige idempotência | Discreta |
+| gRPC | Transiente | Síncrona no unary (RPC síncrona da aula); streaming aproxima de fluxo | Confiável no transporte (TCP/HTTP2) | Discreta (unary) e fluxo (streaming) |
+| RabbitMQ | Persistente com fila durável + mensagem persistente; transiente sem isso | Assíncrona | Confiável com ack e publisher confirms; sem ack, não | Discreta |
+| Kafka | Persistente (log retido em disco, mesmo após a leitura) | Assíncrona | Confiável com commit de offset e replicação | Discreta por mensagem; o tópico é um fluxo ordenado por partição |
+
+**Onde cada protocolo aparece no material:**
+- **gRPC:** seção "Chamada de Procedimento Remoto"; a aula cita o gRPC pelo nome.
+- **REST:** citado uma vez ("Em aplicações Web, RPC perdeu espaço para comunicação REST."); usa a base de sockets TCP e request-response.
+- **RabbitMQ:** seção MOM, AMQP e RabbitMQ; a aula o cita pelo nome.
+- **Kafka:** não aparece pelo nome. Entra pelos conceitos de MOM/comunicação persistente assíncrona e de publica/subscreve. Tudo o que é específico do Kafka é "além do material".
+
 ## Estrutura
 ```
 rest/

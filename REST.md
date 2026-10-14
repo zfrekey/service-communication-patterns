@@ -30,13 +30,32 @@ Estudo do REST como estilo de comunicação síncrona sobre HTTP, com demonstra�
 ## Roteiro do vídeo (duração alvo: ~4 min; não precisa preencher os 5)
 | Tempo | Cena | Mostra | Fala |
 |---|---|---|---|
-| 0:00-0:35 | Intro | Diagrama A → HTTP → B | REST é estilo arquitetural (Fielding), não protocolo; restrições: cliente-servidor, stateless, cache, interface uniforme, camadas |
+| 0:00-0:35 | Intro | Diagrama A → HTTP → B | "Em aplicações Web, RPC perdeu espaço para comunicação REST."; comunicação síncrona requisição-resposta; REST é estilo arquitetural (Fielding), não protocolo; restrições: cliente-servidor, stateless, cache, interface uniforme, camadas |
 | 0:35-1:40 | CRUD | `curl -i` com `POST` (201 + `Location`), `GET`, `PUT`, `DELETE` (204), 404 e 422 | Recursos são substantivos, a ação vem do verbo; status codes por família |
 | 1:40-2:05 | Stateless | Duas instâncias de B atendendo A alternadamente | Sem sessão no servidor → escala horizontal atrás de um load balancer |
 | 2:05-2:30 | Idempotência | `PUT`/`DELETE` repetidos x `POST` repetido duplicando | Métodos seguros e idempotentes; importância para retries em rede não confiável |
 | 2:30-2:55 | Cache | `ETag` e `If-None-Match` → 304 | Cache HTTP nativo, uma vantagem que gRPC e mensageria não têm de graça |
 | 2:55-3:30 | Interoperabilidade | Cliente Python e cliente na segunda linguagem; Swagger em `/docs` | HTTP + JSON é o denominador comum; OpenAPI como contrato |
 | 3:30-4:00 | Fechamento | Mapa dos paradigmas do [PLANO.md](PLANO.md) | Vantagens (simples, universal, navegador) e limites (síncrono, texto); REST x gRPC x mensageria |
+
+## Material da aula 6 (citar no vídeo)
+O REST aparece **pelo nome uma única vez** nos slides `Aula06-sd-comunicacao.pdf`. O resto entra pelos conceitos de comunicação síncrona, transiente e por sockets TCP, que devem ser citados **exatamente como o professor escreveu**. A coluna "Cena" diz onde cada um entra no roteiro.
+
+| Cena | Como está na aula |
+|---|---|
+| Intro | "Em aplicações Web, RPC perdeu espaço para comunicação REST." |
+| Intro | Comunicação Síncrona, "Num modelo requisição-resposta": "Cliente usa chamada bloqueante para enviar requisição ao servidor"; "Cliente usa chamada bloqueante para receber resposta do servidor" |
+| Intro | "Remetente e receptor deve estar ativos ao mesmo tempo e sincronizados" |
+| Intro | Comunicação Transiente: "Caso o middleware não possa entregar a mensagem, ela será descartada"; "Normalmente os serviços de comunicação do nível de transporte oferecem comunicação transiente" → se B estiver fora do ar, a requisição de A falha |
+| Intro | Sockets: "Orientado a conexão: TCP (Transport Control Protocol)"; "Sockets adotam o paradigma cliente-servidor"; "Comunicação transiente" → o HTTP roda sobre um socket TCP |
+| Stateless | "Um servidor concorrente aceita novas conexões sem terminar a anterior." → o uvicorn atende várias conexões; o stateless permite também várias instâncias |
+| Idempotência | Confiável: "Há garantia de entrega da mensagem"; Não-confiável: "Não há garantia de entrega" → o TCP é confiável, mas a requisição HTTP pode falhar no meio; por isso o retry e a idempotência |
+| Interoperabilidade | "Desejável obter modelos onde a complexidade da comunicação seja transparente para o desenvolvedor" |
+| Fechamento | "Novos frameworks de RPC (e.g. gRPC) disputam espaço com REST." |
+
+**Classificação nos eixos da aula**: transiente, síncrona (request-response bloqueante), confiável no transporte (TCP), discreta.
+
+**Além do material** (quase todo o vídeo): REST como estilo arquitetural (Fielding) e suas restrições, recursos e URIs, verbos e status codes, stateless, idempotência, cache com `ETag`/304, OpenAPI/Swagger, modelo de maturidade de Richardson.
 
 ## Conceitos-chave
 - **Restrições REST:** cliente-servidor, stateless, cache, interface uniforme, sistema em camadas.
