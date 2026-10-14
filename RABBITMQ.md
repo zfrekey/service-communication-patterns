@@ -8,6 +8,31 @@ Estudo do RabbitMQ como middleware de mensagens: roteamento, balanceamento, pers
 - Um dos consumers em segunda linguagem (Node com `amqplib` ou Java) para mostrar interoperabilidade.
 - Broker: `rabbitmq:4-management` (AMQP na 5672, painel em http://localhost:15672).
 
+## Ambiente da gravação: notebook + VPS
+Decidido: o broker roda na **VPS** (Hostinger KVM 2, 4 GB de RAM, onde também ficam o portfólio e o xadrez de outro trabalho), e o notebook se conecta por **túnel SSH**. Na tela ficam dois terminais lado a lado (`usuario@vps` e `usuario@notebook`), mostrando que A e B estão em máquinas diferentes e só se conhecem pelo broker.
+
+Por que a VPS e não outro PC: ela já fica ligada, já tem acesso por SSH e não depende de as duas máquinas estarem na mesma rede (Wi-Fi da faculdade costuma isolar os aparelhos).
+
+Por que túnel e não porta aberta: a VPS hospeda coisas no ar, e com o túnel nenhuma porta nova fica exposta. Os scripts continuam usando `localhost`, que no notebook é o túnel. Vale dizer isso no vídeo.
+
+Passo a passo, alternativa com porta aberta e firewall: [DUAS-MAQUINAS.md](DUAS-MAQUINAS.md).
+
+**Antes de ensaiar (na VPS):** `docker --version`; RAM livre com `free -h` (o RabbitMQ usa ~200 MB).
+
+**Túnel (no notebook):** `ssh -N -L 5672:localhost:5672 -L 15672:localhost:15672 usuario@vps`, com o RabbitMQ local parado (mesma porta).
+
+**O que roda onde:**
+| Cena | VPS | Notebook |
+|---|---|---|
+| Roteamento | `roteamento/*.py` | painel em :15672 |
+| Balanceamento | producer e consumer C | consumer B (`--consumers 3` no ponderado) |
+| Persistente x transiente | producer e `docker compose restart rabbitmq` | consumer lendo o que sobrou |
+| Com e sem confirmação | producer e consumer C | consumer B com `--cair-apos`: cai no notebook, a mensagem reaparece em C na VPS |
+| Prioridade | producer | consumer com `--prefetch 1` |
+| Interoperabilidade | `consumer.py` | `consumer.js` |
+
+Depois da gravação: `docker compose down` para devolver a RAM ao portfólio e ao xadrez.
+
 ## Requisitos e como provar cada um
 | Requisito | Demo | O que aparece na tela |
 |---|---|---|

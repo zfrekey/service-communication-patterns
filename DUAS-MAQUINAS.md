@@ -7,6 +7,8 @@ VPS:      broker + producer (Serviço A)
 notebook: consumer (Serviço B)  --internet-->  broker na VPS
 ```
 
+Escolha para a gravação: VPS com túnel SSH (opção 1). Os motivos e o que roda onde em cada cena estão no [RABBITMQ.md](RABBITMQ.md) e no [KAFKA.md](KAFKA.md), na seção "Ambiente da gravação".
+
 Só o broker precisa ficar na VPS. Producer e consumer podem rodar em qualquer uma das duas.
 
 Todos os clientes leem o endereço de variáveis de ambiente. Sem elas, tudo continua em `localhost`, como nas demos locais.

@@ -7,6 +7,32 @@ Estudo do Kafka como log distribuído de eventos e da sua diferença em relaçã
 - **Serviço B** (consumer Python, grupo `grupo-b`) e **Serviço C** (consumer em segunda linguagem, grupo `grupo-c`) leem o mesmo tópico.
 - Broker: Kafka em modo KRaft (sem ZooKeeper), via `docker-compose.yml`.
 
+## Ambiente da gravação: notebook + VPS
+Decidido: o broker roda na **VPS** (Hostinger KVM 2, 4 GB de RAM, onde também ficam o portfólio e o xadrez de outro trabalho), e o notebook se conecta por **túnel SSH**. Na tela ficam dois terminais lado a lado (`usuario@vps` e `usuario@notebook`), mostrando que A e B estão em máquinas diferentes e só se conhecem pelo broker.
+
+Por que a VPS e não outro PC: ela já fica ligada, já tem acesso por SSH e não depende de as duas máquinas estarem na mesma rede (Wi-Fi da faculdade costuma isolar os aparelhos).
+
+Por que túnel e não porta aberta: a VPS hospeda coisas no ar, e com o túnel nenhuma porta nova fica exposta. Os scripts continuam usando `localhost`, que no notebook é o túnel. Vale dizer isso no vídeo.
+
+Passo a passo, alternativa com porta aberta e firewall: [DUAS-MAQUINAS.md](DUAS-MAQUINAS.md).
+
+**Antes de ensaiar (na VPS):**
+- `docker --version`.
+- `free -h`: o Kafka usa ~1 GB e o `kafka-ui` ~300 MB. Cabe nos 4 GB. Se apertar, limite o heap com `KAFKA_HEAP_OPTS: "-Xmx512m -Xms512m"` no compose.
+- `ss -tlnp | grep -E '8080|9092'`: o `kafka-ui` usa a 8080, porta comum de app Node. Se o xadrez estiver nela, mude a porta do `kafka-ui`.
+
+**Túnel (no notebook):** `ssh -N -L 9092:localhost:9092 -L 8080:localhost:8080 usuario@vps`. Funciona sem `KAFKA_HOST`, porque o broker anuncia `localhost:9092` e no notebook esse endereço é o túnel.
+
+**O que roda onde:**
+| Cena | VPS | Notebook |
+|---|---|---|
+| Partição, chave e offset | producer e `comandos.sh` | `kafka-ui` em :8080 |
+| Consumer group | uma instância de `grupo-b` | outra instância de `grupo-b`: derrubar esta e ver a VPS assumir as partições |
+| Pub/sub e replay | `grupo-b` | `grupo-c` (Node) e o grupo novo com `earliest` |
+| Lag e commit | `comandos.sh lag grupo-b` | B parado e depois `--cair-apos` |
+
+Depois da gravação: `docker compose down`.
+
 ## Características a demonstrar
 | Característica | Demo | O que aparece na tela |
 |---|---|---|
@@ -119,7 +145,5 @@ Arquivos em `kafka/`:
 - `comandos.sh`: criar tópico, ver offsets, lag e grupos.
 - `producer.py`: Serviço A com chave = tipo. Testado: cartao → partição 0, pix → 1, boleto → 2.
 - `consumer.py`: Serviço B com commit manual, `--cair-apos` e rebalanceamento rápido. Ainda não testado.
-
-Para rodar com o broker numa VPS e os clientes no notebook (`KAFKA_HOST`), veja [DUAS-MAQUINAS.md](DUAS-MAQUINAS.md).
 
 Pendente: `consumer.js` (Serviço C em Node; o cliente `@confluentinc/kafka-javascript` já está instalado) e testes do consumer.
