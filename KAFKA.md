@@ -120,4 +120,6 @@ Arquivos em `kafka/`:
 - `producer.py`: Serviço A com chave = tipo. Testado: cartao → partição 0, pix → 1, boleto → 2.
 - `consumer.py`: Serviço B com commit manual, `--cair-apos` e rebalanceamento rápido. Ainda não testado.
 
+Para rodar com o broker numa VPS e os clientes no notebook (`KAFKA_HOST`), veja [DUAS-MAQUINAS.md](DUAS-MAQUINAS.md).
+
 Pendente: `consumer.js` (Serviço C em Node; o cliente `@confluentinc/kafka-javascript` já está instalado) e testes do consumer.

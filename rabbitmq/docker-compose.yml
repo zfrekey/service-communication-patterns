@@ -6,6 +6,11 @@ services:
     hostname: rabbit
     ports: ["5672:5672", "15672:15672"]
     volumes: [rabbitmq-dados:/var/lib/rabbitmq]
+    environment:
+      # Só vale na primeira subida (volume vazio). A imagem Docker libera o guest para qualquer
+      # endereço: numa VPS, suba com RABBITMQ_USER e RABBITMQ_PASS para não expor guest/guest.
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-guest}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASS:-guest}
 
 volumes:
   rabbitmq-dados:

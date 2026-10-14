@@ -7,12 +7,15 @@ Uso: python producer.py [--quantidade 12] [--intervalo 0.5] [--inicio 1]
 """
 import argparse
 import json
+import os
 import random
 import time
 
 from confluent_kafka import Producer
 
 TOPICO = "pagamentos"
+# Padrão: broker local. Em duas máquinas: KAFKA_HOST=<ip da VPS>.
+BROKER = f"{os.environ.get('KAFKA_HOST', 'localhost')}:9092"
 TIPOS = ["pix", "cartao", "boleto"]
 
 
@@ -33,7 +36,7 @@ def main():
     args = parser.parse_args()
 
     # acks=all: o broker só confirma depois que todas as réplicas em sincronia (ISR) gravaram.
-    producer = Producer({"bootstrap.servers": "localhost:9092", "acks": "all"})
+    producer = Producer({"bootstrap.servers": BROKER, "acks": "all"})
 
     for i in range(args.inicio, args.inicio + args.quantidade):
         pagamento = {"id": i, "valor": round(random.uniform(10, 500), 2), "tipo": TIPOS[i % len(TIPOS)]}

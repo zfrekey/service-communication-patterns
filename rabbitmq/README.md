@@ -115,6 +115,9 @@ python producer.py --quantidade 10 --intervalo 0.2
 ```
 As mensagens se alternam entre `[B#1]` e `[C/node]` (5 e 5). Sem `--intervalo`, quem der o ack primeiro leva a próxima, e a divisão fica desigual.
 
+## Em duas máquinas
+Broker na VPS e consumer no notebook: veja [../DUAS-MAQUINAS.md](../DUAS-MAQUINAS.md).
+
 ## Problemas comuns
 - **`PRECONDITION_FAILED`:** a fila existe com outros argumentos. Apague-a no painel.
 - **Filas sumiram depois do restart:** use `docker compose restart`. O `hostname` fixo no compose mantém o nome do nó.

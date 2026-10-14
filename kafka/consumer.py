@@ -14,6 +14,8 @@ import time
 from confluent_kafka import Consumer
 
 TOPICO = "pagamentos"
+# Padrão: broker local. Em duas máquinas: KAFKA_HOST=<ip da VPS>.
+BROKER = f"{os.environ.get('KAFKA_HOST', 'localhost')}:9092"
 
 
 def main():
@@ -29,7 +31,7 @@ def main():
     nome = f"{args.nome}|{args.grupo}"
 
     consumer = Consumer({
-        "bootstrap.servers": "localhost:9092",
+        "bootstrap.servers": BROKER,
         "group.id": args.grupo,
         "auto.offset.reset": args.offset,
         "enable.auto.commit": False,

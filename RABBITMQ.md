@@ -225,7 +225,7 @@ Comandos de cada demo na ordem do roteiro do vídeo, com a saída esperada.
 - **`PRECONDITION_FAILED`:** declarar uma fila que já existe com argumentos diferentes (ex.: sem `x-max-priority`) fecha o canal. Toda declaração passa por `comum.declarar_fila`. Se mudar argumentos, apague a fila no painel.
 - **`docker compose down` sem `-v`** mantém o volume, mas sem `hostname` fixo o nó muda de nome e as filas "somem". Para a demo de restart, use `docker compose restart`.
 - **Filas de roteamento acumulam** entre ensaios. Os scripts fazem `queue_purge` no início.
-- **guest/guest** só funciona a partir de localhost (padrão do RabbitMQ). Aqui não é problema.
+- **guest/guest:** o RabbitMQ só aceita o guest via localhost, mas a imagem Docker desliga essa trava (`loopback_users.guest = false`). Numa VPS, crie outro usuário (`RABBITMQ_USER`/`RABBITMQ_PASS`) antes de expor a porta.
 
 ## Estado
 Implementado em [rabbitmq/](rabbitmq/README.md). Todos os critérios de pronto foram verificados (RabbitMQ 4, pika 1.3, amqplib 0.10).

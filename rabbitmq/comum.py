@@ -4,6 +4,7 @@ Producer e consumer declaram as filas pelo mesmo `declarar_fila`. Redeclarar uma
 fila existente com argumentos diferentes fecha o canal com PRECONDITION_FAILED.
 """
 import json
+import os
 import random
 
 import pika
@@ -19,7 +20,11 @@ FILAS = {
 
 
 def conectar():
-    return pika.BlockingConnection(pika.ConnectionParameters("localhost"))
+    # Padrão: broker local. Em duas máquinas: RABBITMQ_HOST=<ip do broker> e o usuário criado no compose.
+    credenciais = pika.PlainCredentials(os.environ.get("RABBITMQ_USER", "guest"),
+                                        os.environ.get("RABBITMQ_PASS", "guest"))
+    return pika.BlockingConnection(pika.ConnectionParameters(os.environ.get("RABBITMQ_HOST", "localhost"),
+                                                             credentials=credenciais))
 
 
 def declarar_fila(canal, nome):

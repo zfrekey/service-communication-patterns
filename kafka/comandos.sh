@@ -3,7 +3,8 @@
 set -euo pipefail
 
 BIN=/opt/kafka/bin
-BROKER=localhost:9092
+# Listener interno: funciona dentro do container qualquer que seja o KAFKA_HOST.
+BROKER=kafka:29092
 TOPICO=pagamentos
 
 kafka() { docker exec kafka "$BIN/$1" --bootstrap-server "$BROKER" "${@:2}"; }

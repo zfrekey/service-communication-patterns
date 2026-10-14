@@ -13,7 +13,8 @@ const { values: args } = parseArgs({
 });
 
 const FILA = "trabalho";
-const conexao = await amqp.connect("amqp://localhost");
+const { RABBITMQ_HOST = "localhost", RABBITMQ_USER = "guest", RABBITMQ_PASS = "guest" } = process.env;
+const conexao = await amqp.connect(`amqp://${RABBITMQ_USER}:${RABBITMQ_PASS}@${RABBITMQ_HOST}`);
 const canal = await conexao.createChannel();
 // Mesmos argumentos do FILAS["trabalho"] em comum.py, senão PRECONDITION_FAILED.
 await canal.assertQueue(FILA, { durable: true });
